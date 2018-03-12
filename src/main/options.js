@@ -15,12 +15,12 @@ const hiddenDefaults = {
 };
 
 // Copy options and fill in default values.
-function normalize(options, opts) {
+function normalize(options, opts, internalPlugins) {
   opts = opts || {};
 
   const rawOptions = Object.assign({}, options);
 
-  const plugins = loadPlugins(rawOptions.plugins);
+  const plugins = loadPlugins(rawOptions.plugins, internalPlugins);
   rawOptions.plugins = plugins;
 
   const supportOptions = getSupportInfo(null, {

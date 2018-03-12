@@ -3,18 +3,8 @@
 const resolve = require("resolve");
 const readPkgUp = require("read-pkg-up");
 
-function loadPlugins(plugins) {
+function loadPlugins(plugins, internalPlugins) {
   plugins = plugins || [];
-
-  const internalPlugins = [
-    require("../language-js"),
-    require("../language-css"),
-    require("../language-handlebars"),
-    require("../language-graphql"),
-    require("../language-markdown"),
-    require("../language-html"),
-    require("../language-vue")
-  ];
 
   const externalPlugins = plugins
     .concat(

@@ -5,6 +5,7 @@ const dedent = require("dedent");
 const semver = require("semver");
 const currentVersion = require("../../package.json").version;
 const loadPlugins = require("./load-plugins");
+const internalPlugins = require("../internal_plugins");
 const cliConstant = require("../cli/constant");
 
 const CATEGORY_GLOBAL = "Global";
@@ -208,7 +209,9 @@ function getSupportInfo(version, opts) {
     version = currentVersion;
   }
 
-  const plugins = opts.pluginsLoaded ? opts.plugins : loadPlugins(opts.plugins);
+  const plugins = opts.pluginsLoaded
+    ? opts.plugins
+    : loadPlugins(opts.plugins, internalPlugins);
 
   const options = util
     .arrayify(

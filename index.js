@@ -14,6 +14,7 @@ const parser = require("./src/main/parser");
 const config = require("./src/config/resolve-config");
 
 const doc = require("./src/doc");
+
 const printDocToString = doc.printer.printDocToString;
 const printDocToDebug = doc.debug.printDocToDebug;
 
@@ -385,67 +386,75 @@ function formatRange(text, opts, ast) {
   return text.slice(0, rangeStart) + rangeTrimmed + text.slice(rangeEnd);
 }
 
-module.exports = {
-  formatWithCursor: function(text, opts) {
-    return formatWithCursor(text, normalizeOptions(opts));
-  },
+module.exports = function makePrettier(internalPlugins) {
+  return {
+    formatWithCursor: function(text, opts) {
+      return formatWithCursor(
+        text,
+        normalizeOptions(opts, null, internalPlugins)
+      );
+    },
 
-  format: function(text, opts) {
-    return format(text, normalizeOptions(opts));
-  },
+    format: function(text, opts) {
+      return format(text, normalizeOptions(opts, null, internalPlugins));
+    },
 
-  check: function(text, opts) {
-    try {
-      const formatted = format(text, normalizeOptions(opts));
-      return formatted === text;
-    } catch (e) {
-      return false;
+    check: function(text, opts) {
+      try {
+        const formatted = format(
+          text,
+          normalizeOptions(opts, null, internalPlugins)
+        );
+        return formatted === text;
+      } catch (e) {
+        return false;
+      }
+    },
+
+    doc,
+
+    resolveConfig: config.resolveConfig,
+    clearConfigCache: config.clearCache,
+
+    getSupportInfo,
+
+    version,
+
+    util: sharedUtil,
+
+    /* istanbul ignore next */
+    __debug: {
+      parse: function(text, opts) {
+        opts = normalizeOptions(opts, null, internalPlugins);
+        return parser.parse(text, opts);
+      },
+      formatAST: function(ast, opts) {
+        opts = normalizeOptions(opts, null, internalPlugins);
+        const doc = printAstToDoc(ast, opts);
+        const str = printDocToString(doc, opts);
+        return str;
+      },
+      // Doesn't handle shebang for now
+      formatDoc: function(doc, opts) {
+        opts = normalizeOptions(opts, null, internalPlugins);
+        const debug = printDocToDebug(doc);
+        const str = format(debug, opts);
+        return str;
+      },
+      printToDoc: function(text, opts) {
+        opts = normalizeOptions(opts, null, internalPlugins);
+        const result = parser.parse(text, opts);
+        const ast = result.ast;
+        text = result.text;
+        attachComments(text, ast, opts);
+        const doc = printAstToDoc(ast, opts);
+        return doc;
+      },
+      printDocToString: function(doc, opts) {
+        opts = normalizeOptions(opts, null, internalPlugins);
+        const str = printDocToString(doc, opts);
+        return str;
+      }
     }
-  },
-
-  doc,
-
-  resolveConfig: config.resolveConfig,
-  clearConfigCache: config.clearCache,
-
-  getSupportInfo,
-
-  version,
-
-  util: sharedUtil,
-
-  /* istanbul ignore next */
-  __debug: {
-    parse: function(text, opts) {
-      opts = normalizeOptions(opts);
-      return parser.parse(text, opts);
-    },
-    formatAST: function(ast, opts) {
-      opts = normalizeOptions(opts);
-      const doc = printAstToDoc(ast, opts);
-      const str = printDocToString(doc, opts);
-      return str;
-    },
-    // Doesn't handle shebang for now
-    formatDoc: function(doc, opts) {
-      opts = normalizeOptions(opts);
-      const debug = printDocToDebug(doc);
-      const str = format(debug, opts);
-      return str;
-    },
-    printToDoc: function(text, opts) {
-      opts = normalizeOptions(opts);
-      const result = parser.parse(text, opts);
-      const ast = result.ast;
-      text = result.text;
-      attachComments(text, ast, opts);
-      const doc = printAstToDoc(ast, opts);
-      return doc;
-    },
-    printDocToString: function(doc, opts) {
-      opts = normalizeOptions(opts);
-      const str = printDocToString(doc, opts);
-      return str;
-    }
-  }
+  };
 };
